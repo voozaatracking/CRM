@@ -1,4 +1,4 @@
-# CRM
+# CRM 
 # CRM Lite
 
 Einfaches CRM für Vertriebsteams – Kanban Board, Lead-Management, CSV-Import.
