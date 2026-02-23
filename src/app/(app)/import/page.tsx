@@ -1,3 +1,4 @@
+// src/app/(app)/import/page.tsx
 "use client";
 import { useState, useCallback } from "react";
 import Papa from "papaparse";
@@ -10,7 +11,7 @@ const DB_FIELDS = [
   { key: "email", label: "E-Mail" },
   { key: "phone", label: "Telefon" },
   { key: "address", label: "Adresse" },
-  { key: "website", label: "Website / Link" },
+  { key: "website", label: "Website" },
   { key: "notes", label: "Notizen" },
 ];
 
@@ -32,6 +33,7 @@ export default function ImportPage() {
         const headers = res.meta.fields || [];
         setCsvHeaders(headers);
         setCsvRows(res.data as Record<string, string>[]);
+        // Auto-map by matching names
         const autoMap: Record<string, string> = {};
         for (const f of DB_FIELDS) {
           const match = headers.find(
