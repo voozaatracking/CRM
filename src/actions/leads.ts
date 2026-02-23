@@ -58,6 +58,9 @@ export async function updateLeadStatus(id: string, newStatus: LeadStatus, userNa
     if (!lead.owner) {
       (updates as any).owner = userName;
     }
+    if (newStatus === "Kontaktiert" && !lead.first_contacted_at) {
+      (updates as any).first_contacted_at = new Date().toISOString();
+    }
   }
 
   const { error } = await db().from("leads").update(updates).eq("id", id);
