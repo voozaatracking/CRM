@@ -46,7 +46,7 @@ export async function updateLead(id: string, updates: Partial<Lead>, userName: s
 }
 
 export async function updateLeadStatus(id: string, newStatus: LeadStatus, userName: string) {
-  const statusIndex = LEAD_STATUSES.indexOf(newStatus);
+  const statusIndex = (LEAD_STATUSES as readonly string[]).indexOf(newStatus);
   const updates: Partial<Lead> & { updated_by: string; updated_at: string } = {
     status: newStatus,
     updated_by: userName,
