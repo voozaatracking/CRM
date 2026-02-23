@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lead, LEAD_STATUSES } from "@/types";
+import { Lead, LEAD_STATUSES, INACTIVE_STATUSES, MITARBEITER } from "@/types";
 import { updateLead, markContacted, setOwner, deleteLead } from "@/actions/leads";
 import { useName } from "./NameProvider";
 
@@ -35,8 +35,9 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
     router.refresh();
   }
 
-  async function handleTakeOwnership() {
-    await setOwner(lead.id, name, name);
+  async function handleOwnerChange(newOwner: string) {
+    change("owner", newOwner);
+    await setOwner(lead.id, newOwner, name);
     router.refresh();
   }
 
@@ -66,12 +67,6 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
           >
             Jetzt kontaktiert
           </button>
-          <button
-            onClick={handleTakeOwnership}
-            className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
-          >
-            Uebernehmen
-          </button>
         </div>
       </div>
 
@@ -99,6 +94,23 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
             {LEAD_STATUSES.map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}
+            {INACTIVE_STATUSES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Mitarbeiter</label>
+          <select
+            className="w-full border rounded-lg px-3 py-2"
+            value={form.owner || ""}
+            onChange={(e) => handleOwnerChange(e.target.value)}
+          >
+            <option value="">-- Mitarbeiter waehlen --</option>
+            {MITARBEITER.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
           </select>
         </div>
 
@@ -112,7 +124,6 @@ export default function LeadDetail({ lead }: { lead: Lead }) {
         </div>
 
         <div className="text-sm text-gray-500 space-y-1">
-          <p>Owner: {lead.owner || "–"}</p>
           <p>Zuletzt kontaktiert: {lead.last_contacted_at ? new Date(lead.last_contacted_at).toLocaleString("de-DE") : "–"}</p>
           <p>Zuletzt bearbeitet von: {lead.updated_by || "–"}</p>
         </div>
