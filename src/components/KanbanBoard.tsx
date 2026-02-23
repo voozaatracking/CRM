@@ -1,12 +1,40 @@
 "use client";
 import { useEffect, useState } from "react";
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, useDroppable } from "@dnd-kit/core";
 import { Lead, LEAD_STATUSES, INACTIVE_STATUSES } from "@/types";
 import { updateLeadStatus } from "@/actions/leads";
 import { useName } from "./NameProvider";
 import KanbanColumn from "./KanbanColumn";
 import LeadCard from "./LeadCard";
 import { getSupabaseClient } from "@/lib/supabase-client";
+
+function InactiveZone({ inactiveLeads }: { inactiveLeads: Lead[] }) {
+  const { setNodeRef, isOver } = useDroppable({ id: "Kein Interesse" });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`border-2 border-dashed rounded-xl p-4 min-h-[100px] transition ${
+        isOver ? "border-red-500 bg-red-100" : "border-red-300 bg-red-50"
+      }`}
+    >
+      <h2 className="text-lg font-semibold text-red-700 mb-3">
+        Kein Interesse ({inactiveLeads.length})
+      </h2>
+      {inactiveLeads.length === 0 ? (
+        <p className="text-red-400 text-sm">
+          Leads hierher ziehen um sie als &quot;Kein Interesse&quot; zu markieren
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+          {inactiveLeads.map((lead) => (
+            <LeadCard key={lead.id} lead={lead} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function KanbanBoard({ initialLeads }: { initialLeads: Lead[] }) {
   const { name } = useName();
@@ -24,16 +52,22 @@ export default function KanbanBoard({ initialLeads }: { initialLeads: Lead[] }) 
             setLeads((prev) => [payload.new as Lead, ...prev]);
           } else if (payload.eventType === "UPDATE") {
             setLeads((prev) =>
-              prev.map((l) => (l.id === (payload.new as Lead).id ? (payload.new as Lead) : l))
+              prev.map((l) =>
+                l.id === (payload.new as Lead).id ? (payload.new as Lead) : l
+              )
             );
           } else if (payload.eventType === "DELETE") {
-            setLeads((prev) => prev.filter((l) => l.id !== (payload.old as any).id));
+            setLeads((prev) =>
+              prev.filter((l) => l.id !== (payload.old as any).id)
+            );
           }
         }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
@@ -77,31 +111,7 @@ export default function KanbanBoard({ initialLeads }: { initialLeads: Lead[] }) 
             />
           ))}
         </div>
-
-        <div
-          className="border-2 border-dashed border-red-300 rounded-xl p-4 bg-red-50 min-h-[100px]"
-          onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-red-500", "bg-red-100"); }}
-          onDragLeave={(e) => { e.currentTarget.classList.remove("border-red-500", "bg-red-100"); }}
-          onDrop={(e) => {
-            e.preventDefault();
-            e.currentTarget.classList.remove("border-red-500", "bg-red-100");
-            const leadId = e.dataTransfer.getData("leadId");
-            if (leadId) handleDrop(leadId, "Kein Interesse");
-          }}
-        >
-          <h2 className="text-lg font-semibold text-red-700 mb-3">
-            Kein Interesse ({inactiveLeads.length})
-          </h2>
-          {inactiveLeads.length === 0 ? (
-            <p className="text-red-400 text-sm">Leads hierher ziehen um sie als &quot;Kein Interesse&quot; zu markieren</p>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              {inactiveLeads.map((lead) => (
-                <LeadCard key={lead.id} lead={lead} />
-              ))}
-            </div>
-          )}
-        </div>
+        <InactiveZone inactiveLeads={inactiveLeads} />
       </div>
     </DndContext>
   );
