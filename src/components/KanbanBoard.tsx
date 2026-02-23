@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { Lead, LEAD_STATUSES, INACTIVE_STATUSES } from "@/types";
 import { updateLeadStatus } from "@/actions/leads";
 import { useName } from "./NameProvider";
@@ -32,9 +33,7 @@ export default function KanbanBoard({ initialLeads }: { initialLeads: Lead[] }) 
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   useEffect(() => {
@@ -48,6 +47,17 @@ export default function KanbanBoard({ initialLeads }: { initialLeads: Lead[] }) 
     await updateLeadStatus(leadId, newStatus as any, name);
   }
 
+  function onDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over) return;
+    const leadId = active.id as string;
+    const newStatus = over.id as string;
+    const lead = leads.find((l) => l.id === leadId);
+    if (lead && lead.status !== newStatus) {
+      handleDrop(leadId, newStatus);
+    }
+  }
+
   const activeLeads = leads.filter(
     (l) => !(INACTIVE_STATUSES as readonly string[]).includes(l.status)
   );
@@ -56,47 +66,43 @@ export default function KanbanBoard({ initialLeads }: { initialLeads: Lead[] }) 
   );
 
   return (
-    <div className="space-y-8">
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {LEAD_STATUSES.map((status) => (
-          <KanbanColumn
-            key={status}
-            status={status}
-            leads={activeLeads.filter((l) => l.status === status)}
-            onDrop={handleDrop}
-          />
-        ))}
-      </div>
+    <DndContext onDragEnd={onDragEnd}>
+      <div className="space-y-8">
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {LEAD_STATUSES.map((status) => (
+            <KanbanColumn
+              key={status}
+              status={status}
+              leads={activeLeads.filter((l) => l.status === status)}
+            />
+          ))}
+        </div>
 
-      <div
-        className="border-2 border-dashed border-red-300 rounded-xl p-4 bg-red-50 min-h-[100px]"
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.currentTarget.classList.add("border-red-500", "bg-red-100");
-        }}
-        onDragLeave={(e) => {
-          e.currentTarget.classList.remove("border-red-500", "bg-red-100");
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          e.currentTarget.classList.remove("border-red-500", "bg-red-100");
-          const leadId = e.dataTransfer.getData("leadId");
-          if (leadId) handleDrop(leadId, "Kein Interesse");
-        }}
-      >
-        <h2 className="text-lg font-semibold text-red-700 mb-3">
-          Kein Interesse ({inactiveLeads.length})
-        </h2>
-        {inactiveLeads.length === 0 ? (
-          <p className="text-red-400 text-sm">Leads hierher ziehen um sie als &quot;Kein Interesse&quot; zu markieren</p>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-            {inactiveLeads.map((lead) => (
-              <LeadCard key={lead.id} lead={lead} />
-            ))}
-          </div>
-        )}
+        <div
+          className="border-2 border-dashed border-red-300 rounded-xl p-4 bg-red-50 min-h-[100px]"
+          onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-red-500", "bg-red-100"); }}
+          onDragLeave={(e) => { e.currentTarget.classList.remove("border-red-500", "bg-red-100"); }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove("border-red-500", "bg-red-100");
+            const leadId = e.dataTransfer.getData("leadId");
+            if (leadId) handleDrop(leadId, "Kein Interesse");
+          }}
+        >
+          <h2 className="text-lg font-semibold text-red-700 mb-3">
+            Kein Interesse ({inactiveLeads.length})
+          </h2>
+          {inactiveLeads.length === 0 ? (
+            <p className="text-red-400 text-sm">Leads hierher ziehen um sie als &quot;Kein Interesse&quot; zu markieren</p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+              {inactiveLeads.map((lead) => (
+                <LeadCard key={lead.id} lead={lead} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </DndContext>
   );
 }
