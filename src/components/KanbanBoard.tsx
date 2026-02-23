@@ -8,6 +8,32 @@ import KanbanColumn from "./KanbanColumn";
 import LeadCard from "./LeadCard";
 import { getSupabaseClient } from "@/lib/supabase-client";
 
+function StatsBar({ leads }: { leads: Lead[] }) {
+  const stats = leads.reduce((acc, lead) => {
+    if (!lead.owner) return acc;
+    acc[lead.owner] = (acc[lead.owner] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+
+  if (sorted.length === 0) return null;
+
+  return (
+    <div className="bg-white border rounded-xl p-4">
+      <h2 className="text-sm font-semibold text-gray-600 mb-3">📊 Leads pro Mitarbeiter</h2>
+      <div className="flex flex-wrap gap-3">
+        {sorted.map(([owner, count]) => (
+          <div key={owner} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+            <span className="text-sm font-medium text-gray-700">{owner}</span>
+            <span className="text-sm font-bold text-blue-600">{count}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function InactiveZone({ inactiveLeads }: { inactiveLeads: Lead[] }) {
   const { setNodeRef, isOver } = useDroppable({ id: "Kein Interesse" });
 
@@ -111,6 +137,7 @@ export default function KanbanBoard({ initialLeads }: { initialLeads: Lead[] }) 
             />
           ))}
         </div>
+        <StatsBar leads={leads} />
         <InactiveZone inactiveLeads={inactiveLeads} />
       </div>
     </DndContext>
