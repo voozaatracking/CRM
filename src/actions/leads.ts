@@ -53,7 +53,6 @@ export async function updateLeadStatus(id: string, newStatus: LeadStatus, userNa
     updated_at: new Date().toISOString(),
   };
 
-  // Auto-set owner when moving to "Follow Up" or beyond (index >= 2)
   if (statusIndex >= 2) {
     const lead = await getLead(id);
     if (!lead.owner) {
@@ -63,7 +62,7 @@ export async function updateLeadStatus(id: string, newStatus: LeadStatus, userNa
 
   const { error } = await db().from("leads").update(updates).eq("id", id);
   if (error) throw error;
-  revalidatePath("/");
+  // kein revalidatePath → Realtime übernimmt
 }
 
 export async function markContacted(id: string, userName: string) {
