@@ -2,13 +2,15 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Lead, LEAD_STATUSES, LeadStatus } from "@/types";
+import { deleteLead } from "@/actions/leads";
 
 export default function LeadList({ initialLeads }: { initialLeads: Lead[] }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "">("");
+  const [leads, setLeads] = useState(initialLeads);
 
   const filtered = useMemo(() => {
-    return initialLeads.filter((l) => {
+    return leads.filter((l) => {
       const matchSearch =
         !search ||
         l.company_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -16,7 +18,13 @@ export default function LeadList({ initialLeads }: { initialLeads: Lead[] }) {
       const matchStatus = !statusFilter || l.status === statusFilter;
       return matchSearch && matchStatus;
     });
-  }, [initialLeads, search, statusFilter]);
+  }, [leads, search, statusFilter]);
+
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`"${name}" wirklich löschen?`)) return;
+    await deleteLead(id);
+    setLeads((prev) => prev.filter((l) => l.id !== id));
+  }
 
   return (
     <div className="space-y-4">
@@ -48,6 +56,7 @@ export default function LeadList({ initialLeads }: { initialLeads: Lead[] }) {
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Owner</th>
               <th className="px-4 py-3">Aktualisiert</th>
+              <th className="px-4 py-3 w-16"></th>
             </tr>
           </thead>
           <tbody>
@@ -62,10 +71,19 @@ export default function LeadList({ initialLeads }: { initialLeads: Lead[] }) {
                 <td className="px-4 py-3">{lead.status}</td>
                 <td className="px-4 py-3">{lead.owner || "–"}</td>
                 <td className="px-4 py-3">{new Date(lead.updated_at).toLocaleDateString("de-DE")}</td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => handleDelete(lead.id, lead.company_name)}
+                    className="text-red-500 hover:text-red-700 text-xs"
+                    title="Löschen"
+                  >
+                    🗑️
+                  </button>
+                </td>
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">Keine Leads gefunden</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">Keine Leads gefunden</td></tr>
             )}
           </tbody>
         </table>
