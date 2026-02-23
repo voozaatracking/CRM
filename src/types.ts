@@ -7,7 +7,24 @@ export const LEAD_STATUSES = [
   "Geraet aufgestellt",
 ] as const;
 
-export type LeadStatus = (typeof LEAD_STATUSES)[number];
+export const INACTIVE_STATUSES = [
+  "Kein Interesse",
+] as const;
+
+export type LeadStatus = (typeof LEAD_STATUSES)[number] | (typeof INACTIVE_STATUSES)[number];
+
+export const MITARBEITER = [
+  "Mitarbeiter 1",
+  "Mitarbeiter 2",
+  "Mitarbeiter 3",
+  "Mitarbeiter 4",
+  "Mitarbeiter 5",
+  "Mitarbeiter 6",
+  "Mitarbeiter 7",
+  "Mitarbeiter 8",
+  "Mitarbeiter 9",
+  "Mitarbeiter 10",
+];
 
 export interface Lead {
   id: string;
