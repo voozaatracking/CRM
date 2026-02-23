@@ -53,7 +53,7 @@ export async function updateLeadStatus(id: string, newStatus: LeadStatus, userNa
     updated_at: new Date().toISOString(),
   };
 
-  if (statusIndex >= 2) {
+  if (statusIndex >= 1) {
     const lead = await getLead(id);
     if (!lead.owner) {
       (updates as any).owner = userName;
