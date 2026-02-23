@@ -18,6 +18,7 @@ export default function Header() {
     { href: "/liste", label: "Liste" },
     { href: "/neu", label: "+ Neu" },
     { href: "/import", label: "Import" },
+    { href: "/statistik", label: "Statistik" },
   ];
 
   return (
