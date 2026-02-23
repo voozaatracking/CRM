@@ -5,9 +5,14 @@ export const LEAD_STATUSES = [
   "Angebot gesendet",
   "Verhandlung",
   "Geraet aufgestellt",
+  "Kein Interesse",
 ] as const;
 
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
+
+export const INACTIVE_STATUSES: LeadStatus[] = ["Kein Interesse"];
+
+export const MITARBEITER = ["Luis", "David", "Konrad", "Stian"] as const;
 
 export interface Lead {
   id: string;
@@ -20,8 +25,8 @@ export interface Lead {
   status: LeadStatus;
   owner: string | null;
   notes: string | null;
-  last_contacted_at: string | null;
   first_contacted_at: string | null;
+  last_contacted_at: string | null;
   created_at: string;
   updated_at: string;
   updated_by: string | null;
