@@ -1,73 +1,102 @@
 "use client";
-import { useState } from "react";
-import {
-  DndContext,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { Lead, LeadStatus, LEAD_STATUSES } from "@/types";
+import { useEffect, useState } from "react";
+import { Lead, LEAD_STATUSES, INACTIVE_STATUSES } from "@/types";
 import { updateLeadStatus } from "@/actions/leads";
 import { useName } from "./NameProvider";
 import KanbanColumn from "./KanbanColumn";
 import LeadCard from "./LeadCard";
+import { getSupabaseClient } from "@/lib/supabase-client";
 
 export default function KanbanBoard({ initialLeads }: { initialLeads: Lead[] }) {
-  const [leads, setLeads] = useState(initialLeads);
-  const [activeId, setActiveId] = useState<string | null>(null);
   const { name } = useName();
+  const [leads, setLeads] = useState<Lead[]>(initialLeads);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    const channel = supabase
+      .channel("leads-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "leads" },
+        (payload) => {
+          if (payload.eventType === "INSERT") {
+            setLeads((prev) => [payload.new as Lead, ...prev]);
+          } else if (payload.eventType === "UPDATE") {
+            setLeads((prev) =>
+              prev.map((l) => (l.id === (payload.new as Lead).id ? (payload.new as Lead) : l))
+            );
+          } else if (payload.eventType === "DELETE") {
+            setLeads((prev) => prev.filter((l) => l.id !== (payload.old as any).id));
+          }
+        }
+      )
+      .subscribe();
 
-  function handleDragStart(event: DragStartEvent) {
-    setActiveId(event.active.id as string);
-  }
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
-  async function handleDragEnd(event: DragEndEvent) {
-    setActiveId(null);
-    const { active, over } = event;
-    if (!over) return;
+  useEffect(() => {
+    setLeads(initialLeads);
+  }, [initialLeads]);
 
-    const leadId = active.id as string;
-    const newStatus = over.id as LeadStatus;
-
-    const lead = leads.find((l) => l.id === leadId);
-    if (!lead || lead.status === newStatus) return;
-
-    // Optimistic update
+  async function handleDrop(leadId: string, newStatus: string) {
     setLeads((prev) =>
-      prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
+      prev.map((l) => (l.id === leadId ? { ...l, status: newStatus as any } : l))
     );
-
-    try {
-      await updateLeadStatus(leadId, newStatus, name);
-    } catch {
-      // Revert on error
-      setLeads((prev) =>
-        prev.map((l) => (l.id === leadId ? { ...l, status: lead.status } : l))
-      );
-    }
+    await updateLeadStatus(leadId, newStatus as any, name);
   }
 
-  const activeLead = leads.find((l) => l.id === activeId);
+  const activeLeads = leads.filter(
+    (l) => !(INACTIVE_STATUSES as readonly string[]).includes(l.status)
+  );
+  const inactiveLeads = leads.filter((l) =>
+    (INACTIVE_STATUSES as readonly string[]).includes(l.status)
+  );
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <div className="space-y-8">
       <div className="flex gap-4 overflow-x-auto pb-4">
         {LEAD_STATUSES.map((status) => (
           <KanbanColumn
             key={status}
             status={status}
-            leads={leads.filter((l) => l.status === status)}
+            leads={activeLeads.filter((l) => l.status === status)}
+            onDrop={handleDrop}
           />
         ))}
       </div>
-      <DragOverlay>
-        {activeLead ? <LeadCard lead={activeLead} /> : null}
-      </DragOverlay>
-    </DndContext>
+
+      <div
+        className="border-2 border-dashed border-red-300 rounded-xl p-4 bg-red-50 min-h-[100px]"
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.currentTarget.classList.add("border-red-500", "bg-red-100");
+        }}
+        onDragLeave={(e) => {
+          e.currentTarget.classList.remove("border-red-500", "bg-red-100");
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.currentTarget.classList.remove("border-red-500", "bg-red-100");
+          const leadId = e.dataTransfer.getData("leadId");
+          if (leadId) handleDrop(leadId, "Kein Interesse");
+        }}
+      >
+        <h2 className="text-lg font-semibold text-red-700 mb-3">
+          Kein Interesse ({inactiveLeads.length})
+        </h2>
+        {inactiveLeads.length === 0 ? (
+          <p className="text-red-400 text-sm">Leads hierher ziehen um sie als &quot;Kein Interesse&quot; zu markieren</p>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            {inactiveLeads.map((lead) => (
+              <LeadCard key={lead.id} lead={lead} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
