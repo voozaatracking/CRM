@@ -27,6 +27,7 @@ export async function createLead(lead: Partial<Lead>, userName: string) {
     email: lead.email || null,
     phone: lead.phone || null,
     address: lead.address || null,
+    website: lead.website || null,
     status: lead.status || "Neu",
     notes: lead.notes || null,
     updated_by: userName,
@@ -108,7 +109,6 @@ export async function importLeads(
   const errors: string[] = [];
   const validRows = [];
 
-  // Existierende Firmennamen laden
   const { data: existing } = await db()
     .from("leads")
     .select("company_name, address");
@@ -137,6 +137,7 @@ export async function importLeads(
       email: row.email || null,
       phone: row.phone || null,
       address: row.address || null,
+      website: row.website || null,
       notes: row.notes || null,
       status: "Neu",
       owner: null,
