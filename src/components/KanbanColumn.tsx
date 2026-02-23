@@ -3,7 +3,13 @@ import { useDroppable } from "@dnd-kit/core";
 import { Lead, LeadStatus } from "@/types";
 import LeadCard from "./LeadCard";
 
-export default function KanbanColumn({ status, leads }: { status: LeadStatus; leads: Lead[] }) {
+export default function KanbanColumn({
+  status,
+  leads,
+}: {
+  status: LeadStatus;
+  leads: Lead[];
+}) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
