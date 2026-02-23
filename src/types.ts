@@ -14,10 +14,10 @@ export const INACTIVE_STATUSES = [
 export type LeadStatus = (typeof LEAD_STATUSES)[number] | (typeof INACTIVE_STATUSES)[number];
 
 export const MITARBEITER = [
-  "Mitarbeiter 1",
-  "Mitarbeiter 2",
-  "Mitarbeiter 3",
-  "Mitarbeiter 4",
+  "Luis",
+  "David",
+  "Stian",
+  "Konrad",
   "Mitarbeiter 5",
   "Mitarbeiter 6",
   "Mitarbeiter 7",
