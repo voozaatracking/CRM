@@ -1,6 +1,9 @@
 export const LEAD_STATUSES = [
   "Neu",
   "Kontaktiert",
+  "Erneut kontaktieren",
+  "Info versenden",
+  "Info versendet",
   "Follow Up",
   "Angebot gesendet",
   "Verhandlung",
@@ -12,7 +15,7 @@ export type LeadStatus = (typeof LEAD_STATUSES)[number];
 
 export const INACTIVE_STATUSES: LeadStatus[] = ["Kein Interesse"];
 
-export const MITARBEITER = ["Luis", "David", "Konrad", "Stian"] as const;
+export const MITARBEITER = ["Alex", "Chris", "Dana", "Sam"] as const;
 
 export interface Lead {
   id: string;
