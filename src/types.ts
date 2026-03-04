@@ -15,7 +15,7 @@ export type LeadStatus = (typeof LEAD_STATUSES)[number];
 
 export const INACTIVE_STATUSES: LeadStatus[] = ["Kein Interesse"];
 
-export const MITARBEITER = ["Alex", "Chris", "Dana", "Sam"] as const;
+export const MITARBEITER = ["Konrad", "David", "Stian", "Luis"] as const;
 
 export interface Lead {
   id: string;
