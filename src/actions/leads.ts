@@ -11,8 +11,10 @@ export async function getLeads() {
     .select("*")
     .order("updated_at", { ascending: false });
   if (error) throw error;
+  revalidatePath("/");
   return data as Lead[];
 }
+
 
 export async function getLead(id: string) {
   const { data, error } = await db().from("leads").select("*").eq("id", id).single();
